@@ -1,4 +1,102 @@
+let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 
+function guardarCarrito() {
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+}
+
+function agregarAlCarrito() {
+    let selectProductos = document.getElementById('productoSeleccionado');
+    let precio = parseFloat(selectProductos.value);
+    let productoNombre = selectProductos.options[selectProductos.selectedIndex].text.split('$')[0].trim(); 
+
+    if (!isNaN(precio) && precio > 0) {
+        let productoExistente = carrito.find(item => item.nombre === productoNombre);
+        
+        if (productoExistente) {
+            productoExistente.cantidad++;
+        } else {
+            carrito.push({ nombre: productoNombre, precio, cantidad: 1 });
+        }
+
+        guardarCarrito();
+        actualizarTotal();
+        mostrarDetalleCarrito();
+    }
+}
+
+function actualizarTotal() {
+    let total = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+    document.getElementById('montoTotal').textContent = `Total: $${total}`;
+}
+
+function mostrarDetalleCarrito() {
+    let listaCarrito = document.getElementById('detalleCarrito');
+    listaCarrito.innerHTML = '';
+
+    carrito.forEach((item, index) => {
+        let li = document.createElement('li');
+        li.textContent = `${item.nombre} x${item.cantidad}: $${item.precio * item.cantidad}`;
+        
+        let botonEliminar = document.createElement('button');
+        botonEliminar.textContent = "❌";
+        botonEliminar.classList.add('btn', 'btn-danger', 'btn-sm', 'ms-2');
+        botonEliminar.onclick = () => eliminarUnidad(index);
+        
+        li.appendChild(botonEliminar);
+        listaCarrito.appendChild(li);
+    });
+}
+
+function calcularCuotas() {
+    let selectCuotas = document.getElementById('cuotasSeleccionadas');
+    let cuotas = parseInt(selectCuotas.value);
+    let total = carrito.reduce((acc, item) => acc + (item.precio * item.cantidad), 0);
+    let montoFinal = total;
+
+    if (cuotas === 9) {
+        montoFinal *= 1.2; 
+    } else if (cuotas === 12) {
+        montoFinal *= 1.4; 
+    }
+
+    let cuotaMensual = montoFinal / cuotas;
+    document.getElementById('resultadoCuotas').textContent = 
+        `Total con cuotas: $${montoFinal.toFixed(2)} (${cuotas} cuotas de $${cuotaMensual.toFixed(2)})`;
+}
+
+function eliminarUnidad(index) {
+    if (carrito[index].cantidad > 1) {
+        carrito[index].cantidad--;
+    } else {
+        carrito.splice(index, 1);
+    }
+    guardarCarrito();
+    actualizarTotal();
+    mostrarDetalleCarrito();
+}
+
+function eliminarCompra() {
+    carrito = [];
+    localStorage.removeItem('carrito');
+    document.getElementById('montoTotal').textContent = "Total: $0";
+    document.getElementById('resultadoCuotas').textContent = "Total con cuotas: -";
+    document.getElementById('productoSeleccionado').selectedIndex = 0;
+    document.getElementById('cuotasSeleccionadas').selectedIndex = 0;
+    document.getElementById('detalleCarrito').innerHTML = '';
+}
+
+document.getElementById('agregarProducto').addEventListener('click', agregarAlCarrito);
+document.getElementById('cuotasSeleccionadas').addEventListener('change', calcularCuotas);
+document.getElementById('eliminarCompra').addEventListener('click', eliminarCompra);
+
+window.addEventListener('load', () => {
+    mostrarDetalleCarrito();
+    actualizarTotal();
+});
+
+
+
+/*
     class Prenda {
         constructor (id, nombre, precio, talle) {
             this.id = id;
@@ -38,6 +136,8 @@
     }
 
     filtrarPrendas();
+    
+    */
 
     /*
     
